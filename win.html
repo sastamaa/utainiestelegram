@@ -38,7 +38,7 @@
 <body>
 
   <h1>🎬 Win or Lose — Плейлист</h1>
-  <video id="videoPlayer" controls>
+  <video id="videoPlayer" controls muted playsinline>
     <source id="videoSource" src="" type="video/mp4" />
     Ваш браузер не підтримує відео.
   </video>
@@ -81,7 +81,7 @@
       currentIndex = index;
       source.src = playlist[index].url;
       video.load();
-      video.play();
+      video.play().catch(err => console.warn('Автовідтворення заблоковано. Клікніть на сторінку.'));
       highlight(index);
     }
 
@@ -91,8 +91,11 @@
       }
     });
 
-    renderPlaylist();
-    playEpisode(0);
+    // Дочекатись завантаження і лише тоді запускати
+    window.addEventListener("DOMContentLoaded", () => {
+      renderPlaylist();
+      playEpisode(0);
+    });
   </script>
 
 </body>
