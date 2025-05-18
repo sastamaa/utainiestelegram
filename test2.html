@@ -1,17 +1,15 @@
-# Створимо HTML-файл з плеєром, плаваючим меню серій, кнопкою "Наступна серія" і підтримкою сезонів через playlist API
-playlist_season_html = """<!DOCTYPE html>
-<html>
+<!DOCTYPE html>
+<html lang="uk">
 <head>
-  <meta charset="UTF-8" />
-  <title>Плеєр з вибором сезону</title>
-  <link href="https://unpkg.com/video.js/dist/video-js.css" rel="stylesheet" />
+  <meta charset="UTF-8">
+  <title>Netflix-Style Plyr Playlist</title>
+  <link rel="stylesheet" href="https://cdn.plyr.io/3.7.8/plyr.css" />
   <style>
     body {
-      font-family: sans-serif;
-      background: #121212;
-      color: #fff;
       margin: 0;
-      padding: 0;
+      font-family: Arial, sans-serif;
+      background-color: #141414;
+      color: #fff;
     }
 
     .container {
@@ -19,7 +17,7 @@ playlist_season_html = """<!DOCTYPE html>
       height: 100vh;
     }
 
-    .video-section {
+    .video-area {
       flex: 1;
       display: flex;
       flex-direction: column;
@@ -28,64 +26,64 @@ playlist_season_html = """<!DOCTYPE html>
       position: relative;
     }
 
-    .video-js {
+    .player {
       width: 90%;
       max-width: 960px;
     }
 
-    .playlist-menu {
+    .playlist-panel {
       width: 300px;
-      background: #1e1e1e;
+      background-color: #1f1f1f;
       overflow-y: auto;
       padding: 20px;
-      border-left: 1px solid #333;
+      border-left: 2px solid #333;
     }
 
     .playlist-item {
-      margin-bottom: 15px;
+      background-color: #2c2c2c;
       padding: 10px;
+      margin-bottom: 10px;
       border-radius: 5px;
-      background: #2a2a2a;
       cursor: pointer;
-      transition: background 0.2s;
+      transition: background 0.2s ease;
     }
 
     .playlist-item:hover, .playlist-item.active {
-      background: #444;
-    }
-
-    .next-btn {
-      position: absolute;
-      bottom: 30px;
-      right: 30px;
-      z-index: 10;
-      background: #ff4081;
-      border: none;
-      border-radius: 30px;
-      color: white;
-      font-size: 16px;
-      padding: 12px 20px;
-      cursor: pointer;
-      transition: background 0.3s;
-    }
-
-    .next-btn:hover {
-      background: #ff1a66;
+      background-color: #444;
     }
 
     .season-select {
-      margin-top: 20px;
+      margin: 20px 0;
+      text-align: center;
     }
 
     .season-select label, .season-select select {
       font-size: 16px;
+    }
+
+    .next-button {
+      position: absolute;
+      bottom: 30px;
+      right: 30px;
+      background-color: #e50914;
+      border: none;
+      border-radius: 30px;
+      color: white;
+      padding: 12px 20px;
+      font-size: 16px;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+
+    .next-button:hover {
+      background-color: #b00710;
     }
   </style>
 </head>
 <body>
 
 <div class="container">
-  <div class="video-section">
+  <div class="video-area">
     <div class="season-select">
       <label for="seasonSelect">Сезон:</label>
       <select id="seasonSelect">
@@ -93,83 +91,90 @@ playlist_season_html = """<!DOCTYPE html>
         <option value="2">Сезон 2</option>
       </select>
     </div>
-    <video id="videoPlayer" class="video-js vjs-default-skin" controls preload="auto"></video>
-    <button class="next-btn" onclick="playNext()">Наступна серія</button>
+    <video id="player" class="player" controls crossorigin playsinline></video>
+    <button class="next-button" onclick="playNext()">Наступна серія</button>
   </div>
-  <div class="playlist-menu" id="playlistMenu">
-    <!-- Серії будуть додані динамічно -->
+  <div class="playlist-panel" id="playlistPanel">
+    <!-- Плейлист буде тут -->
   </div>
 </div>
 
-<script src="https://unpkg.com/video.js/dist/video.js"></script>
-<script src="https://unpkg.com/videojs-playlist/dist/videojs-playlist.js"></script>
-
+<script src="https://cdn.plyr.io/3.7.8/plyr.polyfilled.js"></script>
 <script>
-  const player = videojs('videoPlayer');
+  const player = new Plyr('#player');
 
   const seasons = {
     1: [
-      { name: 'Серія 1 — Початок', sources: [{ src: 'https://www.nd.vidce.net/d/wrt3W_tnZ7hyGKJX1Kvh2A/1748180408/video/2015/tt2096673.mp4', type: 'video/mp4' }] },
-      { name: 'Серія 2 — Сюрприз', sources: [{ src: 'https://www.sw.vidce.net/d/OlQx8tBD5fky_2mo-ChhHw/1748180447/video/2015/tt22022452GR.mp4', type: 'video/mp4' }] }
+      { title: 'Серія 1 — Початок', src: 'https://www.nd.vidce.net/d/AQHpMJK1hJvIOtN8UROhIg/1748180006/video/2015/tt1690953.mp4', type: 'video/mp4' },
+      { title: 'Серія 2 — Сюрприз', src: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4', type: 'video/mp4' }
     ],
     2: [
-      { name: 'Серія 1 — Новий старт', sources: [{ src: 'https://www.nd.vidce.net/d/iP04ov4ICBGMG2HUk7MY4Q/1748179807/video/2015/tt1323594GR.mp4', type: 'video/mp4' }] },
-      { name: 'Серія 2 — Інше продовження', sources: [{ src: 'https://www.nd.vidce.net/d/AQHpMJK1hJvIOtN8UROhIg/1748180006/video/2015/tt1690953.mp4', type: 'video/mp4' }] }
+      { title: 'Серія 1 — Новий старт', src: 'https://ashdi.vip/video18/1/new/s_1_ep_1_178471/hls/1080/AqaXi3SOjuRfnhH+B4s=/index.m3u8', type: 'application/x-mpegURL' },
+      { title: 'Серія 2 — Інше продовження', src: 'https://mojulkarim.github.io/plyr/hls/test.m3u8', type: 'application/x-mpegURL' }
     ]
   };
 
-  let currentIndex = 0;
   let currentSeason = 1;
+  let currentIndex = 0;
 
-  function loadSeason(seasonNumber) {
+  function loadPlaylist(seasonNumber) {
     currentSeason = parseInt(seasonNumber);
-    const playlist = seasons[currentSeason];
-    player.playlist(playlist);
-    player.playlist.currentItem(0);
-    updatePlaylistUI();
-    player.play();
+    currentIndex = 0;
+    renderPlaylist();
+    playEpisode(currentIndex);
   }
 
-  function playNext() {
-    player.playlist.next();
+  function playEpisode(index) {
+    currentIndex = index;
+    const episode = seasons[currentSeason][index];
+    player.source = {
+      type: 'video',
+      title: episode.title,
+      sources: [
+        {
+          src: episode.src,
+          type: episode.type
+        }
+      ]
+    };
+    setActiveItem(index);
   }
 
-  function updatePlaylistUI() {
-    const container = document.getElementById('playlistMenu');
+  function setActiveItem(index) {
+    const items = document.querySelectorAll('.playlist-item');
+    items.forEach((el, i) => {
+      el.classList.toggle('active', i === index);
+    });
+  }
+
+  function renderPlaylist() {
+    const container = document.getElementById('playlistPanel');
     container.innerHTML = '';
     seasons[currentSeason].forEach((ep, index) => {
       const item = document.createElement('div');
       item.className = 'playlist-item';
-      item.textContent = ep.name;
+      item.textContent = ep.title;
       item.onclick = () => {
-        player.playlist.currentItem(index);
+        playEpisode(index);
         player.play();
       };
       container.appendChild(item);
     });
+  }
 
-    player.on('playlistitem', () => {
-      const items = container.querySelectorAll('.playlist-item');
-      items.forEach((el, i) => {
-        el.classList.toggle('active', i === player.playlist.currentItem());
-      });
-    });
+  function playNext() {
+    if (currentIndex + 1 < seasons[currentSeason].length) {
+      playEpisode(currentIndex + 1);
+      player.play();
+    }
   }
 
   document.getElementById('seasonSelect').addEventListener('change', function () {
-    loadSeason(this.value);
+    loadPlaylist(this.value);
   });
 
-  loadSeason(1);
+  loadPlaylist(1);
 </script>
 
 </body>
 </html>
-"""
-
-# Збереження HTML-файлу
-file_path = "/mnt/data/playlist_with_seasons_player.html"
-with open(file_path, "w", encoding="utf-8") as f:
-    f.write(playlist_season_html)
-
-file_path
